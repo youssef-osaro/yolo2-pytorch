@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 import utils.network as net_utils
 import cfgs.config as cfg
-from layers.reorg.reorg_layer import ReorgLayer
+from custom_layers.reorg.reorg_layer import ReorgLayer
 from utils.cython_bbox import bbox_ious, bbox_intersections, bbox_overlaps, anchor_intersections
 from utils.cython_yolo import yolo_to_bbox
 
@@ -26,7 +26,7 @@ def _make_layers(in_channels, net_cfg):
             else:
                 out_channels, ksize = item
                 layers.append(net_utils.Conv2d_BatchNorm(in_channels, out_channels, ksize, same_padding=True))
-                # layers.append(net_utils.Conv2d(in_channels, out_channels, ksize, same_padding=True))
+                # custom_layers.append(net_utils.Conv2d(in_channels, out_channels, ksize, same_padding=True))
                 in_channels = out_channels
 
     return nn.Sequential(*layers), in_channels
