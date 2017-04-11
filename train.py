@@ -1,8 +1,5 @@
 import os
-import cv2
 import torch
-import numpy as np
-from torch.multiprocessing import Pool
 
 from darknet import Darknet19
 
@@ -24,10 +21,6 @@ imdb = VOCDataset(cfg.imdb_train, cfg.DATA_DIR, cfg.train_batch_size,
 print('load data succ...')
 
 net = Darknet19()
-# net_utils.load_net(cfg.trained_model, net)
-# pretrained_model = os.path.join(cfg.train_output_dir, 'darknet19_voc07trainval_exp1_63.h5')
-# pretrained_model = cfg.trained_model
-# net_utils.load_net(pretrained_model, net)
 net.load_from_npz(cfg.pretrained_model, num_conv=18)
 net.cuda()
 net.train()
@@ -91,8 +84,8 @@ for step in range(start_epoch * imdb.batch_per_epoch, cfg.max_epoch * imdb.batch
         bbox_loss /= cnt
         iou_loss /= cnt
         cls_loss /= cnt
-        print('epoch: %d, step: %d, loss: %.3f, bbox_loss: %.3f, iou_loss: %.3f, cls_loss: %.3f (%.2f s/batch)' % (
-            imdb.epoch, step, train_loss, bbox_loss, iou_loss, cls_loss, duration))
+        print(('epoch: %d, step: %d, loss: %.3f, bbox_loss: %.3f, iou_loss: %.3f, cls_loss: %.3f (%.2f s/batch)' % (
+            imdb.epoch, step, train_loss, bbox_loss, iou_loss, cls_loss, duration)))
 
         if use_tensorboard and step % cfg.log_interval == 0:
             exp.add_scalar_value('loss_train', train_loss, step=step)
@@ -113,7 +106,7 @@ for step in range(start_epoch * imdb.batch_per_epoch, cfg.max_epoch * imdb.batch
 
         save_name = os.path.join(cfg.train_output_dir, '{}_{}.h5'.format(cfg.exp_name, imdb.epoch))
         net_utils.save_net(save_name, net)
-        print('save model: {}'.format(save_name))
+        print(('save model: {}'.format(save_name)))
 
 
 imdb.close()

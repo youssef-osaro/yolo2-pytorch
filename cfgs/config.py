@@ -1,6 +1,6 @@
 import os
-from config_voc import *
-from exps.darknet19_exp1 import *
+from .config_voc import *
+from .exps.darknet19_exp1 import *
 
 
 def mkdir(path, max_depth=3):
@@ -39,14 +39,17 @@ thresh = 0.3
 
 # dir config
 ############################
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+h5_fname = 'yolo-voc.weights.h5' # trained model
+pretrained_darknet = 'darknet19.weights.npz'
+ROOT_DIR = '/mnt/bigdata/yolo/'
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 MODEL_DIR = os.path.join(ROOT_DIR, 'models')
 TRAIN_DIR = os.path.join(MODEL_DIR, 'training')
 TEST_DIR = os.path.join(MODEL_DIR, 'testing')
 
 trained_model = os.path.join(MODEL_DIR, h5_fname)
-pretrained_model = os.path.join(MODEL_DIR, pretrained_fname)
+pretrained_model = os.path.join(MODEL_DIR, pretrained_darknet)
 train_output_dir = os.path.join(TRAIN_DIR, exp_name)
 test_output_dir = os.path.join(TEST_DIR, imdb_test, h5_fname)
 mkdir(train_output_dir, max_depth=3)

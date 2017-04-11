@@ -1,6 +1,5 @@
 import os
 import cv2
-import torch
 import numpy as np
 from torch.multiprocessing import Pool
 
@@ -19,25 +18,19 @@ def preprocess(fname):
 
 
 # hyper-parameters
-# npz_fname = 'models/yolo-voc.weights.npz'
-# h5_fname = 'models/yolo-voc.weights.h5'
 trained_model = cfg.trained_model
-# trained_model = os.path.join(cfg.train_output_dir, 'darknet19_voc07trainval_exp3_158.h5')
 thresh = 0.5
-im_path = 'demo'
+im_path = '.'
 # ---
 
 net = Darknet19()
 net_utils.load_net(trained_model, net)
-# net.load_from_npz(npz_fname)
-# net_utils.save_net(h5_fname, net)
 net.cuda()
 net.eval()
 print('load model succ...')
 
 t_det = Timer()
 t_total = Timer()
-# im_fnames = ['person.jpg']
 im_fnames = sorted((fname for fname in os.listdir(im_path) if os.path.splitext(fname)[-1] == '.jpg'))
 im_fnames = (os.path.join(im_path, fname) for fname in im_fnames)
 pool = Pool(processes=1)
@@ -61,16 +54,18 @@ for i, (image, im_data) in enumerate(pool.imap(preprocess, im_fnames, chunksize=
 
     if im2show.shape[0] > 1100:
         im2show = cv2.resize(im2show, (int(1000. * float(im2show.shape[1]) / im2show.shape[0]), 1000))
-    cv2.imshow('test', im2show)
+
+    import matplotlib.pyplot as plt
+    plt.imshow(im2show)
+    plt.show()
 
     total_time = t_total.toc()
     # wait_time = max(int(60 - total_time * 1000), 1)
-    cv2.waitKey(0)
 
     if i % 1 == 0:
         format_str = 'frame: %d, (detection: %.1f Hz, %.1f ms) (total: %.1f Hz, %.1f ms)'
-        print(format_str % (
-            i, 1. / det_time, det_time * 1000, 1. / total_time, total_time * 1000))
+        print((format_str % (
+            i, 1. / det_time, det_time * 1000, 1. / total_time, total_time * 1000)))
 
         t_total.clear()
         t_det.clear()
