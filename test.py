@@ -1,6 +1,6 @@
 import os
 import cv2
-import torch
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
@@ -23,11 +23,10 @@ def preprocess(fname):
 # ------------
 imdb_name = cfg.imdb_test
 trained_model = cfg.trained_model
-# trained_model = os.path.join(cfg.train_output_dir, 'darknet19_voc07trainval_exp3_158.h5')
 output_dir = cfg.test_output_dir
 
 max_per_image = 300
-thresh = 0.01
+thresh = 0.1
 vis = False
 # ------------
 
@@ -94,8 +93,9 @@ def test_net(net, imdb, max_per_image=300, thresh=0.5, vis=False):
             im2show = yolo_utils.draw_detection(ori_im, bboxes, scores, cls_inds, cfg)
             if im2show.shape[0] > 1100:
                 im2show = cv2.resize(im2show, (int(1000. * float(im2show.shape[1]) / im2show.shape[0]), 1000))
-            cv2.imshow('test', im2show)
-            cv2.waitKey(0)
+            im2show = im2show[:, :, (2, 1, 0)]
+            plt.imshow(im2show)
+            plt.show()
 
     with open(det_file, 'wb') as f:
         pickle.dump(all_boxes, f, pickle.HIGHEST_PROTOCOL)

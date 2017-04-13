@@ -116,14 +116,6 @@ class VOCDataset(ImageDataset):
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
         objs = tree.findall('object')
-        # if not self.config['use_diff']:
-        #     # Exclude the samples labeled as difficult
-        #     non_diff_objs = [
-        #         obj for obj in objs if int(obj.find('difficult').text) == 0]
-        #     # if len(non_diff_objs) != len(objs):
-        #     #     print 'Removed {} difficult objects'.format(
-        #     #         len(objs) - len(non_diff_objs))
-        #     objs = non_diff_objs
         num_objs = len(objs)
 
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
@@ -217,7 +209,7 @@ class VOCDataset(ImageDataset):
             aps += [ap]
             print(('AP for {} = {:.4f}'.format(cls, ap)))
             if output_dir is not None:
-                with open(os.path.join(output_dir, cls + '_pr.pkl'), 'w') as f:
+                with open(os.path.join(output_dir, cls + '_pr.pkl'), 'wb') as f:
                     pickle.dump({'rec': rec, 'prec': prec, 'ap': ap}, f)
         print(('Mean AP = {:.4f}'.format(np.mean(aps))))
         print('~~~~~~~~')
