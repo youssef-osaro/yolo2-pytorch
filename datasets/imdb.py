@@ -1,5 +1,4 @@
 import os
-import PIL
 import numpy as np
 from multiprocessing import Pool
 
