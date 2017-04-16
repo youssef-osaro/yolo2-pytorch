@@ -1,3 +1,5 @@
+from multiprocessing import Pool
+
 import torch
 import numpy as np
 import torch.nn as nn
@@ -8,8 +10,6 @@ import cfgs.config as cfg
 from custom_layers.reorg.reorg_layer import ReorgLayer
 from utils.cython_bbox import bbox_ious, bbox_intersections, bbox_overlaps, anchor_intersections
 from utils.cython_yolo import yolo_to_bbox
-
-from multiprocessing import Pool
 
 
 def _make_layers(in_channels, net_cfg):
@@ -26,7 +26,6 @@ def _make_layers(in_channels, net_cfg):
             else:
                 out_channels, ksize = item
                 layers.append(net_utils.Conv2d_BatchNorm(in_channels, out_channels, ksize, same_padding=True))
-                # custom_layers.append(net_utils.Conv2d(in_channels, out_channels, ksize, same_padding=True))
                 in_channels = out_channels
 
     return nn.Sequential(*layers), in_channels
@@ -65,7 +64,6 @@ def _process_batch(data):
     bbox_np[:, :, 0::2] *= float(inp_size[0])
     bbox_np[:, :, 1::2] *= float(inp_size[1])
 
-    # gt_boxes_b = np.asarray(gt_boxes[b], dtype=np.float)
     gt_boxes_b = np.asarray(gt_boxes, dtype=np.float)
 
     # for each cell
@@ -77,7 +75,7 @@ def _process_batch(data):
     best_ious = np.max(ious, axis=1).reshape(_iou_mask.shape)
     _iou_mask[best_ious <= cfg.iou_thresh] = cfg.noobject_scale
 
-    # locate the cell of each gt_boxe
+    # locate the cell of each gt_box
     cell_w = float(inp_size[0]) / W
     cell_h = float(inp_size[1]) / H
     cx = (gt_boxes_b[:, 0] + gt_boxes_b[:, 2]) * 0.5 / cell_w
@@ -102,7 +100,6 @@ def _process_batch(data):
     anchor_inds = np.argmax(anchor_ious, axis=0)
     for i, cell_ind in enumerate(cell_inds):
         if cell_ind >= hw or cell_ind < 0:
-            print(cell_ind)
             continue
         a = anchor_inds[i]
 
@@ -191,8 +188,7 @@ class Darknet19(nn.Module):
         # wh_pred = torch.exp(conv5_reshaped[:, :, :, 2:4])
         wh_pred = conv5_reshaped[:, :, :, 2:4]
         bbox_pred = torch.cat([xy_pred, wh_pred], 3)
-
-        iou_pred = F.sigmoid(conv5_reshaped[:, :, :, 4:5])
+        iou_pred = F.sigmoid(conv5_reshaped[:, :, :, 4])
 
         score_pred = conv5_reshaped[:, :, :, 5:].contiguous()
         prob_pred = F.softmax(score_pred.view(-1, score_pred.size()[-1])).view_as(score_pred)
@@ -212,7 +208,6 @@ class Darknet19(nn.Module):
 
             num_boxes = sum((len(boxes) for boxes in gt_boxes))
 
-            # _boxes[:, :, :, 2:4] = torch.log(_boxes[:, :, :, 2:4])
             box_mask = box_mask.expand_as(_boxes)
             # self.bbox_loss = torch.sum(torch.pow(_boxes - bbox_pred, 2) * box_mask) / num_boxes
             self.bbox_loss = nn.MSELoss(size_average=False)(bbox_pred * box_mask, _boxes * box_mask) / num_boxes
@@ -223,9 +218,6 @@ class Darknet19(nn.Module):
             class_mask = class_mask.expand_as(prob_pred)
             # self.cls_loss = torch.sum(torch.pow(_classes - prob_pred, 2) * class_mask) / num_boxes
             self.cls_loss = nn.MSELoss(size_average=False)(prob_pred * class_mask, _classes * class_mask) / num_boxes
-
-        wh_pred = torch.exp(conv5_reshaped[:, :, :, 2:4])
-        bbox_pred = torch.cat([xy_pred, wh_pred], 3)
 
         return bbox_pred, iou_pred, prob_pred
 
@@ -272,6 +264,5 @@ class Darknet19(nn.Module):
 
 if __name__ == '__main__':
     net = Darknet19()
-    # net.load_from_npz('models/yolo-voc.weights.npz')
     net.load_from_npz('models/darknet19.weights.npz', num_conv=18)
 
